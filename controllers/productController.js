@@ -67,15 +67,22 @@ const deleteProduct = async (req, res) => {
 // @access  Private/Admin
 const createProduct = async (req, res) => {
     try {
-        const { name, price, description, image, images, category, countInStock, slug } = req.body;
+        const { name, price, description, category, countInStock, slug } = req.body;
+
+        // Handle Image Upload
+        let image = '/uploads/sample.jpg'; // Default
+        if (req.file) {
+            image = `/uploads/products/${req.file.filename}`;
+        } else if (req.body.image) {
+            // Keep support for URL if manually sent, though UI will use file
+            image = req.body.image;
+        }
 
         const product = new Product({
             name,
             price,
             user: req.user._id,
             image,
-            images,
-            category,
             category,
             stock: countInStock,
             numReviews: 0,
@@ -99,8 +106,6 @@ const updateProduct = async (req, res) => {
             name,
             price,
             description,
-            image,
-            images,
             category,
             countInStock,
             slug
@@ -112,11 +117,13 @@ const updateProduct = async (req, res) => {
             product.name = name || product.name;
             product.price = price || product.price;
             product.description = description || product.description;
-            product.image = image || product.image;
-            product.images = images || product.images;
             product.category = category || product.category;
             product.stock = countInStock || product.stock;
             product.slug = slug || product.slug;
+
+            if (req.file) {
+                product.image = `/uploads/products/${req.file.filename}`;
+            }
 
             const updatedProduct = await product.save();
             res.json(updatedProduct);
